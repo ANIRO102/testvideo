@@ -1,5 +1,3 @@
--Kakah Menu
-
 getgenv().DisableArrayfieldAutoLoad
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
 
