@@ -1,0 +1,91 @@
+-- Configurações iniciais
+local isESPEnabled = true -- Variável que permite ativar/desativar o ESP
+local fovRadius = 100 -- Tamanho do campo de visão (FOV)
+
+-- Criando a UI
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local toggleButton = Instance.new("TextButton")
+
+-- Configurações do botão
+toggleButton.Size = UDim2.new(0, 200, 0, 50)
+toggleButton.Position = UDim2.new(0.5, -100, 0, 50)
+toggleButton.Text = "Toggle ESP"
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.Parent = screenGui
+
+-- Função para desenhar o ESP para um jogador
+local function createESP(player, isEnemy)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        -- Cria o highlight/caixa ao redor do jogador
+        local espBox = Instance.new("BoxHandleAdornment")
+        espBox.Adornee = player.Character.HumanoidRootPart
+        espBox.Size = player.Character.HumanoidRootPart.Size + Vector3.new(2, 2, 2) -- Aumenta o tamanho para visibilidade
+        espBox.Color3 = isEnemy and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 0, 255) -- Vermelho para inimigos, azul para aliados
+        espBox.Transparency = 0.5
+        espBox.ZIndex = 5
+        espBox.AlwaysOnTop = true
+        espBox.Parent = player.Character.HumanoidRootPart
+        
+        -- Cria uma seta indicando a direção do jogador (FOV)
+        local arrow = Instance.new("ImageLabel")
+        arrow.Size = UDim2.new(0, 20, 0, 20)
+        arrow.Image = "rbxassetid://3944680095" -- Um exemplo de seta
+        arrow.BackgroundTransparency = 1
+        arrow.Position = UDim2.new(0.5, 0, 0.5, 0)
+        arrow.AnchorPoint = Vector2.new(0.5, 0.5)
+        arrow.Parent = player.Character.HumanoidRootPart
+    end
+end
+
+-- Função para remover o ESP quando não estiver ativo
+local function removeESP(player)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        for _, adornment in pairs(player.Character.HumanoidRootPart:GetChildren()) do
+            if adornment:IsA("BoxHandleAdornment") or adornment:IsA("ImageLabel") then
+                adornment:Destroy()
+            end
+        end
+    end
+end
+
+-- Função para aplicar ESP a todos os jogadores no servidor
+local function applyESPToAllPlayers(localPlayerTeam)
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Team ~= localPlayerTeam then
+            createESP(player, true) -- Inimigos (vermelho)
+        else
+            createESP(player, false) -- Amigos (azul)
+        end
+    end
+end
+
+-- Evento para aplicar ESP a novos jogadores que entram
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if isESPEnabled then
+            applyESPToAllPlayers(game.Players.LocalPlayer.Team)
+        end
+    end)
+end)
+
+-- Função para ativar/desativar o ESP
+local function toggleESP()
+    isESPEnabled = not isESPEnabled
+    if not isESPEnabled then
+        -- Se desativado, remove ESP de todos
+        for _, player in pairs(game.Players:GetPlayers()) do
+            removeESP(player)
+        end
+    else
+        -- Se ativado, aplica ESP novamente
+        applyESPToAllPlayers(game.Players.LocalPlayer.Team)
+    end
+end
+
+-- Conectando o botão para ativar/desativar o ESP
+toggleButton.MouseButton1Click:Connect(toggleESP)
+
+-- Aplica ESP inicialmente para todos os jogadores
+applyESPToAllPlayers(game.Players.LocalPlayer.Team)
